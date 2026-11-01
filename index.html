@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f7f5ef">
+<title>饮食自律打卡</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f7f5ef;color:#343a32;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+header{padding:27px 20px 18px;background:#f7f5ef}
+h1{font-size:25px;margin:0 0 6px}
+.sub{font-size:13px;color:#899087}
+main{max-width:520px;margin:auto;padding:0 16px 100px}
+.card{background:white;border-radius:17px;padding:17px;margin-bottom:14px;box-shadow:0 3px 14px #343a3208}
+.top{display:flex;justify-content:space-between;align-items:center}
+.date{font-size:14px;color:#777}
+.tag{font-size:12px;background:#edf4e9;color:#57764c;padding:6px 10px;border-radius:20px}
+.progress{height:7px;background:#edf0e9;border-radius:10px;margin:14px 0 8px;overflow:hidden}
+.bar{height:100%;width:0;background:#76966b;border-radius:10px;transition:.3s}
+.count{font-size:27px;font-weight:650;color:#63845b}
+.task{display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid #f0f0ec}
+.task:last-child{border:0}
+.task-icon{width:42px;height:42px;border-radius:13px;background:#f5f4ed;display:grid;place-items:center;font-size:21px}
+.task-info{flex:1;min-width:0}
+.task-info b{font-size:15px}
+.task-info p{font-size:13px;color:#858980;margin:5px 0 0;line-height:1.5}
+.task-info small{font-size:11px;color:#a0a49b}
+.check{border:1px solid #d7ddd2;border-radius:50%;width:28px;height:28px;background:white;color:white;font-size:16px;cursor:pointer;flex-shrink:0}
+.check.done{background:#78956e;border-color:#78956e}
+.section-title{font-weight:650;font-size:16px;margin-bottom:13px}
+button{font:inherit}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #eee;display:flex;justify-content:center;gap:0;padding:9px 8px calc(9px + env(safe-area-inset-bottom));z-index:5}
+.nav button{flex:1;max-width:170px;border:0;background:none;color:#888;font-size:12px;padding:7px;cursor:pointer}
+.nav button.active{color:#63845b;font-weight:650}
+.nav span{display:block;font-size:20px;margin-bottom:3px}
+.page{display:none}.page.active{display:block}
+.date-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.date-row button,.outline{background:white;border:1px solid #e5e7df;border-radius:9px;padding:8px 12px;color:#58664f;cursor:pointer}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}
+.day-grid div{padding:9px 0;font-size:12px;border-radius:9px}
+.day-grid .weekday{color:#999}
+.day-grid .selected{background:#78956e;color:white}
+.day-grid .complete{background:#edf4e9;color:#55754b}
+.day-grid .partial{background:#f8f0df;color:#a47a37}
+.day-grid .today{outline:1px solid #78956e}
+input{width:100%;border:1px solid #e5e7df;border-radius:10px;padding:12px;font-size:15px;background:#fff;color:#333}
+.primary{width:100%;border:0;border-radius:11px;background:#78956e;color:white;padding:13px;font-weight:600;margin-top:10px;cursor:pointer}
+.record{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #eee;font-size:14px}
+.muted{color:#999;font-size:12px;line-height:1.7}
+.note{background:#f7f5ef;padding:12px;border-radius:11px;font-size:13px;line-height:1.7;color:#73796f}
+</style>
+</head>
+<body>
+<header>
+  <h1>饮食自律打卡 🌿</h1>
+  <div class="sub">好好吃饭，慢慢变健康。</div>
+</header>
+<main>
+  <section id="home" class="page active">
+    <div class="card">
+      <div class="top">
+        <div><div class="date" id="todayText"></div><div style="font-size:18px;font-weight:650;margin-top:6px">今日饮食计划</div></div>
+        <span class="tag" id="dayTag"></span>
+      </div>
+      <div class="progress"><div class="bar" id="progressBar"></div></div>
+      <div><span class="count" id="count">0/4</span> <span class="muted">项任务已完成</span></div>
+    </div>
+    <div class="card">
+      <div class="section-title">我的饮食任务</div>
+      <div id="tasks"></div>
+    </div>
+    <div class="card">
+      <div class="section-title">今日提醒规则</div>
+      <div class="note">早餐 06:00—10:00 · 午餐 10:00—14:00 · 晚餐 14:00—21:00<br>每半小时提醒一次，完成对应打卡后停止提醒。<br><br>当前版本先记录打卡状态，系统推送将在第二阶段接入。</div>
+    </div>
+  </section>
+
+  <section id="calendar" class="page">
+    <div class="card">
+      <div class="section-title">饮食打卡日历</div>
+      <div class="date-row">
+        <button onclick="changeMonth(-1)">‹ 上个月</button>
+        <b id="monthTitle"></b>
+        <button onclick="changeMonth(1)">下个月 ›</button>
+      </div>
+      <div class="day-grid" id="calendarGrid"></div>
+      <div class="muted" style="margin-top:12px">绿色：全部完成　黄色：部分完成　白色：尚未打卡</div>
+    </div>
+    <div class="card">
+      <div class="section-title">选中日期</div>
+      <div id="selectedInfo" class="muted">点击日历中的日期查看打卡情况。</div>
+    </div>
+  </section>
+
+  <section id="weight" class="page">
+    <div class="card">
+      <div class="section-title">记录体重</div>
+      <div class="muted" style="margin-bottom:12px">建议每周记录2—3次，关注长期变化，不必追逐每天的数字。</div>
+      <label class="muted">记录日期</label>
+      <input type="date" id="weightDate">
+      <label class="muted" style="display:block;margin:12px 0 6px">体重（斤）</label>
+      <input type="number" id="weightValue" placeholder="例如：140" step="0.1" min="1">
+      <button class="primary" onclick="saveWeight()">保存体重</button>
+    </div>
+    <div class="card">
+      <div class="section-title">最近一次体重</div>
+      <div class="count" id="latestWeight">-- 斤</div>
+      <div class="muted" id="weightDateText">还没有记录</div>
+    </div>
+    <div class="card">
+      <div class="section-title">体重历史</div>
+      <div id="weightList" class="muted">暂无记录</div>
+    </div>
+  </section>
+</main>
+
+<nav class="nav">
+  <button class="active" onclick="showPage('home',this)"><span>☀️</span>今日打卡</button>
+  <button onclick="showPage('calendar',this)"><span>▦</span>打卡日历</button>
+  <button onclick="showPage('weight',this)"><span>⚖️</span>体重记录</button>
+</nav>
+
+<script>
+const KEY="diet_checkin_v1";
+let db=JSON.parse(localStorage.getItem(KEY)||'{"days":{},"weights":[]}');
+let selectedDate=localDate();
+let monthDate=new Date();
+function localDate(d=new Date()){
+  return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function isFast(date){let w=new Date(date+"T12:00:00").getDay();return w===1||w===4}
+function tasksFor(date){
+  let fast=isFast(date);
+  return [
+    {id:"breakfast",icon:"🥚",name:"早餐",time:"06:00—10:00",desc:"两个鸡蛋 + 一份粗粮"},
+    {id:"lunch",icon:"🥗",name:"午餐",time:"10:00—14:00",desc:fast?"餐盘盛菜，今天不吃主食":"用餐盘盛饭菜，只吃餐盘里的食物"},
+    {id:"dinner",icon:"🌙",name:"晚餐",time:"14:00—21:00",desc:fast?"轻食日：计划不安排晚餐":"小碗盛菜一碗，不吃主食"},
+    {id:"discipline",icon:"🛡️",name:"全天饮食纪律",time:"全天",desc:"避免辛辣刺激、深加工、高糖、高油腻食物"}
+  ];
+}
+function dayData(date){return db.days[date]||{}}
+function renderHome(){
+  let d=dayData(selectedDate),tasks=tasksFor(selectedDate);
+  let done=tasks.filter(t=>d[t.id]).length;
+  document.getElementById("todayText").textContent=selectedDate;
+  document.getElementById("dayTag").textContent=isFast(selectedDate)?"轻食日":"普通日";
+  document.getElementById("count").textContent=done+"/4";
+  document.getElementById("progressBar").style.width=(done/4*100)+"%";
+  document.getElementById("tasks").innerHTML=tasks.map(t=>`
+    <div class="task">
+      <div class="task-icon">${t.icon}</div>
+      <div class="task-info"><b>${t.name}</b><p>${t.desc}</p><small>${t.time}</small></div>
+      <button class="check ${d[t.id]?"done":""}" onclick="toggleTask('${t.id}')">${d[t.id]?"✓":""}</button>
+    </div>`).join("");
+}
+function toggleTask(id){
+  if(!db.days[selectedDate])db.days[selectedDate]={};
+  db.days[selectedDate][id]=!db.days[selectedDate][id];
+  save();renderHome();renderCalendar();
+}
+function showPage(id,btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  if(id==="calendar")renderCalendar();
+  if(id==="weight")renderWeights();
+}
+function changeMonth(n){monthDate.setMonth(monthDate.getMonth()+n);renderCalendar()}
+function renderCalendar(){
+  let y=monthDate.getFullYear(),m=monthDate.getMonth();
+  document.getElementById("monthTitle").textContent=y+"年"+(m+1)+"月";
+  let first=new Date(y,m,1).getDay(),total=new Date(y,m+1,0).getDate();
+  let html=["日","一","二","三","四","五","六"].map(x=>`<div class="weekday">${x}</div>`).join("");
+  for(let i=0;i<first;i++)html+="<div></div>";
+  for(let day=1;day<=total;day++){
+    let date=localDate(new Date(y,m,day)),data=dayData(date);
+    let done=tasksFor(date).filter(t=>data[t.id]).length;
+    let cls=date===selectedDate?"selected":done===4?"complete":done>0?"partial":"";
+    if(date===localDate())cls+=" today";
+    html+=`<div class="${cls}" onclick="selectDate('${date}')">${day}${done===4?" ✓":""}</div>`;
+  }
+  document.getElementById("calendarGrid").innerHTML=html;
+  showSelectedInfo();
+}
+function selectDate(date){selectedDate=date;renderCalendar();renderHome()}
+function showSelectedInfo(){
+  let data=dayData(selectedDate),tasks=tasksFor(selectedDate);
+  let done=tasks.filter(t=>data[t.id]).length;
+  document.getElementById("selectedInfo").innerHTML=`<b>${selectedDate}</b><br>完成 ${done}/4 项任务<br>`+tasks.map(t=>(data[t.id]?"✓ ":"○ ")+t.name).join("<br>");
+}
+function saveWeight(){
+  let date=document.getElementById("weightDate").value;
+  let value=parseFloat(document.getElementById("weightValue").value);
+  if(!date||!Number.isFinite(value)||value<=0){alert("请填写正确的日期和体重");return}
+  db.weights=db.weights.filter(x=>x.date!==date);
+  db.weights.push({date,value});
+  db.weights.sort((a,b)=>a.date.localeCompare(b.date));
+  save();document.getElementById("weightValue").value="";renderWeights();
+}
+function renderWeights(){
+  document.getElementById("weightDate").value=localDate();
+  let list=db.weights||[];
+  if(!list.length){
+    document.getElementById("latestWeight").textContent="-- 斤";
+    document.getElementById("weightDateText").textContent="还没有记录";
+    document.getElementById("weightList").textContent="暂无记录";
+    return;
+  }
+  let last=list[list.length-1];
+  document.getElementById("latestWeight").textContent=last.value+" 斤";
+  document.getElementById("weightDateText").textContent=last.date;
+  document.getElementById("weightList").innerHTML=[...list].reverse().map(x=>`<div class="record"><span>${x.date}</span><b>${x.value} 斤</b></div>`).join("");
+}
+renderHome();
+renderCalendar();
+renderWeights();
+</script>
+</body>
+</html>
