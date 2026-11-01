@@ -1,0 +1,12 @@
+
+{
+  "id": "/diet-checkin/",
+  "name": "饮食自律打卡",
+  "short_name": "饮食自律",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f5ef",
+  "theme_color": "#f7f5ef",
+  "description": "每日饮食打卡与健康管理"
+}
