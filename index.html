@@ -164,6 +164,10 @@ function toggleTask(id){
   if(!db.days[selectedDate])db.days[selectedDate]={};
   db.days[selectedDate][id]=!db.days[selectedDate][id];
   save();renderHome();renderCalendar();
+
+  if(["breakfast","lunch","dinner"].includes(id)){
+    window.syncMealStatus(selectedDate);
+  }
 }
 function showPage(id,btn){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
