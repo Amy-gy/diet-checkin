@@ -1,0 +1,10 @@
+name = "diet-checkin-reminder"
+main = "index.js"
+compatibility_date = "2026-11-02"
+
+[[kv_namespaces]]
+binding = "DIET_CHECKIN_KV"
+id = "5a16ffe031274ae79d9ec2425d4b4f74"
+
+[triggers]
+crons = ["*/30 * * * *"]
