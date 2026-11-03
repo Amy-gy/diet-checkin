@@ -77,13 +77,19 @@ select,input{width:100%;border:1px solid #e1e7dc;border-radius:10px;padding:11px
         <span class="tag" id="dayTag">继续加油</span>
       </div>
       <div class="progress"><div class="bar" id="progressBar"></div></div>
-      <div><span class="count" id="count">0/6</span> <span class="muted">项习惯已完成</span></div>
+      <div><span class="count" id="count">0/7</span> <span class="muted">项习惯已完成</span></div>
     </div>
 
     <div class="card">
       <div class="section-title">🥗 好好吃饭</div>
-      <div class="section-sub">记录三餐，不追求完美，按实际情况打卡。</div>
+      <div class="section-sub" id="mealPlanHint">按计划记录三餐与全天饮食原则。</div>
       <div id="mealTasks"></div>
+      <div class="task" style="border-top:1px solid var(--line);border-bottom:0">
+        <div class="task-icon">🥬</div>
+        <div class="task-info"><b>全天饮食原则</b><p>忌辛辣刺激、深加工、高糖油腻食物。</p></div>
+        <button class="check" id="dietRuleCheck" onclick="toggleField('dietRule')" aria-label="全天饮食原则打卡"></button>
+      </div>
+      <div class="note" style="margin-top:8px">轻断食日：每周一、周四。午餐不吃主食，晚餐按计划不进食。</div>
     </div>
 
     <div class="card">
@@ -202,23 +208,31 @@ function setCheck(id,done){
   el.classList.toggle("done",!!done);
   el.textContent=done?"✓":"";
 }
+function isFastingDay(date){
+  const weekday=new Date(date+"T12:00:00").getDay();
+  return weekday===1 || weekday===4;
+}
 function completedCount(date){
   const d=dayData(date);
   const exercise=!!(d.exercise && typeof d.exercise==="object" && d.exercise.done);
   const sleep= d.sleepBefore22===true && d.wakeAt0530===true;
-  return ["breakfast","lunch","dinner"].filter(k=>d[k]===true).length + (exercise?1:0) + (sleep?1:0) + (d.breakSitting===true?1:0);
+  return ["breakfast","lunch","dinner"].filter(k=>d[k]===true).length + (d.dietRule===true?1:0) + (exercise?1:0) + (sleep?1:0) + (d.breakSitting===true?1:0);
 }
 function renderHome(){
   const d=dayData(selectedDate);
   document.getElementById("todayText").textContent=selectedDate;
-  const done=completedCount(selectedDate),total=6;
+  const done=completedCount(selectedDate),total=7;
   document.getElementById("count").textContent=done+"/"+total;
   document.getElementById("progressBar").style.width=(done/total*100)+"%";
   document.getElementById("dayTag").textContent=done===total?"今日全部完成":done>0?"继续加油":"从一项开始";
+  const fasting=isFastingDay(selectedDate);
+  document.getElementById("mealPlanHint").textContent=fasting
+    ? "今天是轻断食日（周一/周四），按轻断食安排记录。"
+    : "日常饮食安排：按下面的份量与搭配执行。";
   const meals=[
-    {id:"breakfast",icon:"🥚",name:"早餐",desc:"按时吃早餐，搭配蛋白质和主食"},
-    {id:"lunch",icon:"🥗",name:"午餐",desc:"正常吃饭，注意蔬菜、蛋白质和主食搭配"},
-    {id:"dinner",icon:"🌙",name:"晚餐",desc:"好好吃晚餐，吃到舒服的饱腹感"}
+    {id:"breakfast",icon:"🥚",name:"早餐",desc:"两个鸡蛋 + 粗粮"},
+    {id:"lunch",icon:"🥗",name:"午餐",desc:fasting?"用餐盘盛饭菜，只吃餐盘里的食物；今天中午不吃主食。":"用餐盘盛饭菜，只吃餐盘里的食物。"},
+    {id:"dinner",icon:"🌙",name:"晚餐",desc:fasting?"用小碗盛菜，轻断食日按计划晚餐不进食。":"用小碗盛菜，吃一碗；晚饭不吃主食。"}
   ];
   document.getElementById("mealTasks").innerHTML=meals.map(t=>`
     <div class="task">
@@ -235,6 +249,7 @@ function renderHome(){
   setCheck("sleepCheck",d.sleepBefore22===true);
   setCheck("wakeCheck",d.wakeAt0530===true);
   setCheck("breakCheck",d.breakSitting===true);
+  setCheck("dietRuleCheck",d.dietRule===true);
   document.getElementById("sleepStatus").textContent=
     d.sleepBefore22===true && d.wakeAt0530===true ? "✓ 两项都完成，今日作息达标。"
     : "两项都完成，才计为一项完整习惯。";
@@ -272,9 +287,9 @@ function renderCalendar(){
   for(let i=0;i<first;i++)html+="<div></div>";
   for(let day=1;day<=total;day++){
     const date=localDate(new Date(y,m,day)),done=completedCount(date);
-    let cls=date===selectedDate?"selected":done===6?"complete":done>0?"partial":"";
+    let cls=date===selectedDate?"selected":done===7?"complete":done>0?"partial":"";
     if(date===localDate())cls+=" today";
-    html+=`<div class="${cls}" onclick="selectDate('${date}')">${day}${done===6?" ✓":""}</div>`;
+    html+=`<div class="${cls}" onclick="selectDate('${date}')">${day}${done===7?" ✓":""}</div>`;
   }
   document.getElementById("calendarGrid").innerHTML=html;
   showSelectedInfo();
@@ -284,6 +299,7 @@ function showSelectedInfo(){
   const d=dayData(selectedDate);
   const items=[
     ["早餐",d.breakfast===true],["午餐",d.lunch===true],["晚餐",d.dinner===true],
+    ["全天饮食原则",d.dietRule===true],
     ["每日锻炼",!!(d.exercise&&d.exercise.done)],
     ["22:00前入睡",d.sleepBefore22===true],["05:30起床",d.wakeAt0530===true],
     ["打断久坐",d.breakSitting===true]
@@ -291,7 +307,7 @@ function showSelectedInfo(){
   const exercise=d.exercise&&d.exercise.done?`<br>运动记录：${d.exercise.type} ${d.exercise.duration} 分钟`:"";
   const sleepDone=d.sleepBefore22===true&&d.wakeAt0530===true;
   document.getElementById("selectedInfo").innerHTML=
-    `<b>${selectedDate}</b><br>完成 ${completedCount(selectedDate)}/6 项习惯`+
+    `<b>${selectedDate}</b>${isFastingDay(selectedDate)?"（轻断食日）":""}<br>完成 ${completedCount(selectedDate)}/7 项习惯`+
     items.map(x=>`<br>${x[1]?"✓":"○"} ${x[0]}`).join("")+exercise+
     `<br><span style="color:#84907e">作息达标：${sleepDone?"是":"否"}</span>`;
 }
