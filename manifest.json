@@ -5,7 +5,15 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f4f7f1",
-  "theme_color": "#f1f6ed",
-  "description": "每日三餐、运动、作息与健康习惯记录"
+  "background_color": "#f7f5ef",
+  "theme_color": "#f7f5ef",
+  "description": "每日饮食打卡与健康管理",
+  "icons": [
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
 }
