@@ -1,12 +1,11 @@
-
 {
   "id": "/diet-checkin/",
-  "name": "饮食自律打卡",
-  "short_name": "饮食自律",
+  "name": "健康行为习惯打卡",
+  "short_name": "健康打卡",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f7f5ef",
-  "theme_color": "#f7f5ef",
-  "description": "每日饮食打卡与健康管理"
+  "background_color": "#f4f7f1",
+  "theme_color": "#f1f6ed",
+  "description": "每日三餐、运动、作息与健康习惯记录"
 }
